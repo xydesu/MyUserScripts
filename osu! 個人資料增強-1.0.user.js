@@ -7,6 +7,7 @@
 // @match        https://osu.ppy.sh/users/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=osu.ppy.sh
 // @grant        GM_addStyle
+// @grant        window.onurlchange
 // @downloadURL  https://github.com/xydesu/MyUserScripts/raw/refs/heads/main/osu%21%20%E5%80%8B%E4%BA%BA%E8%B3%87%E6%96%99%E5%A2%9E%E5%BC%B7-1.0.user.js
 // @updateURL    https://github.com/xydesu/MyUserScripts/raw/refs/heads/main/osu%21%20%E5%80%8B%E4%BA%BA%E8%B3%87%E6%96%99%E5%A2%9E%E5%BC%B7-1.0.user.js
 // ==/UserScript==
