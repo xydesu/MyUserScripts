@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         osu! 個人資料增強
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Enhances osu! user profile pages by adding beatmap cover thumbnails to score lists and a toggle button to hide unearned medals in the achievements section.
 // @author       xydesu
 // @match        https://osu.ppy.sh/users/*
@@ -159,7 +159,16 @@
     // ==========================================
     // 4. 統一的觀察器 (Unified MutationObserver)
     // ==========================================
-    
+
+    function onPageLoad() {
+        // 切換頁面時重置成就篩選狀態
+        isHideLockedEnabled = false;
+        injectThumbnails();
+        if (document.querySelector('.medals-group')) {
+            injectToggle();
+        }
+    }
+
     const observer = new MutationObserver((mutations) => {
         let hasAddedNodes = false;
         mutations.forEach(mutation => {
@@ -181,13 +190,13 @@
         }
     });
 
-    // 綁定觀察器到 body
-    observer.observe(document.body, { childList: true, subtree: true });
+    // 觀察 documentElement 以在 Turbolinks 替換 body 後仍能持續運作
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+
+    // 監聽 Turbolinks 頁面切換事件，確保切換頁面後重新初始化
+    document.addEventListener('turbolinks:load', onPageLoad);
 
     // 初始載入時先手動執行一次
-    injectThumbnails();
-    if (document.querySelector('.medals-group')) {
-        injectToggle();
-    }
+    onPageLoad();
 
 })();
