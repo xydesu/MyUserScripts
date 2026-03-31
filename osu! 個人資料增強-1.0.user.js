@@ -117,7 +117,7 @@
         toggleWrapper.style.cssText = `
             position: absolute; 
             right: 40px; 
-            top: 50%; 
+            top: 25%; 
             transform: translateY(-50%); 
             background: hsl(var(--hsl-b2)); 
             padding: 4px 12px; 
