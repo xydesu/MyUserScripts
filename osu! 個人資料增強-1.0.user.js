@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         osu! 個人資料增強
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  Enhances osu! user profile pages by adding beatmap cover thumbnails to score lists and a toggle button to hide unearned medals in the achievements section.
 // @author       xydesu
 // @match        https://osu.ppy.sh/users/*
-// @icon         https://www.google.com/s2/favicons?sz=64&domain=ppy.sh
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=osu.ppy.sh
 // @grant        GM_addStyle
 // @downloadURL  https://github.com/xydesu/MyUserScripts/raw/refs/heads/main/osu%21%20%E5%80%8B%E4%BA%BA%E8%B3%87%E6%96%99%E5%A2%9E%E5%BC%B7-1.0.user.js
 // @updateURL    https://github.com/xydesu/MyUserScripts/raw/refs/heads/main/osu%21%20%E5%80%8B%E4%BA%BA%E8%B3%87%E6%96%99%E5%A2%9E%E5%BC%B7-1.0.user.js
@@ -118,34 +118,40 @@
             right: 40px; 
             top: 50%; 
             transform: translateY(-50%); 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-            font-size: 14px; 
             background: hsl(var(--hsl-b2)); 
             padding: 4px 12px; 
             border-radius: 20px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         `;
 
+        const label = document.createElement('label');
+        label.style.cssText = 'cursor: pointer; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: normal;';
+
+        const switchDiv = document.createElement('div');
+        switchDiv.className = 'osu-switch-v2';
+
         const checkbox = document.createElement('input');
+        checkbox.className = 'osu-switch-v2__input';
         checkbox.type = 'checkbox';
         checkbox.id = 'toggle-locked-medals-checkbox';
-        checkbox.style.cursor = 'pointer';
 
-        const label = document.createElement('label');
-        label.htmlFor = 'toggle-locked-medals-checkbox';
-        label.textContent = '只顯示已獲得';
-        label.style.cursor = 'pointer';
-        label.style.margin = '0';
-        label.style.fontWeight = 'normal';
+        const switchSpan = document.createElement('span');
+        switchSpan.className = 'osu-switch-v2__content';
+
+        switchDiv.appendChild(checkbox);
+        switchDiv.appendChild(switchSpan);
+
+        const labelText = document.createElement('span');
+        labelText.textContent = '只顯示已獲得';
+
+        label.appendChild(switchDiv);
+        label.appendChild(labelText);
 
         checkbox.addEventListener('change', (e) => {
             isHideLockedEnabled = e.target.checked;
             updateMedalsVisibility();
         });
 
-        toggleWrapper.appendChild(checkbox);
         toggleWrapper.appendChild(label);
         titleContainer.appendChild(toggleWrapper);
     }
