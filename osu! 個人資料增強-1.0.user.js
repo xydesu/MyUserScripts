@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         osu! 個人資料增強
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  Enhances osu! user profile pages by adding beatmap cover thumbnails to score lists and a toggle button to hide unearned medals in the achievements section.
 // @author       xydesu
 // @match        https://osu.ppy.sh/users/*
@@ -171,16 +171,17 @@
 
     const observer = new MutationObserver((mutations) => {
         let hasAddedNodes = false;
-        mutations.forEach(mutation => {
+        for (const mutation of mutations) {
             if (mutation.addedNodes.length > 0) {
                 hasAddedNodes = true;
+                break;
             }
-        });
+        }
 
         // 只要 DOM 有新增節點，就同時檢查並執行兩個功能的邏輯
         if (hasAddedNodes) {
             injectThumbnails();
-            
+
             if (document.querySelector('.medals-group')) {
                 injectToggle();
                 if (isHideLockedEnabled) {
@@ -193,8 +194,17 @@
     // 觀察 documentElement 以在 Turbolinks 替換 body 後仍能持續運作
     observer.observe(document.documentElement, { childList: true, subtree: true });
 
-    // 監聽 Turbolinks 頁面切換事件，確保切換頁面後重新初始化
-    document.addEventListener('turbolinks:load', onPageLoad);
+    // 攔截 history.pushState，捕捉 React Router 等所有 SPA 框架的頁面跳轉
+    const _origPushState = history.pushState.bind(history);
+    history.pushState = function() {
+        _origPushState.apply(this, arguments);
+        onPageLoad();
+    };
+
+    // 監聽各種頁面切換事件
+    window.addEventListener('popstate', onPageLoad);           // 瀏覽器前進/後退
+    document.addEventListener('turbolinks:load', onPageLoad); // Turbolinks 5
+    document.addEventListener('turbo:load', onPageLoad);      // Turbo Drive (@hotwired/turbo)
 
     // 初始載入時先手動執行一次
     onPageLoad();
