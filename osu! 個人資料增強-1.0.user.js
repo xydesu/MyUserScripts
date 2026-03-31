@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         osu! 個人資料增強
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  Enhances osu! user profile pages by adding beatmap cover thumbnails to score lists and a toggle button to hide unearned medals in the achievements section.
 // @author       xydesu
 // @match        https://osu.ppy.sh/users/*
@@ -22,8 +22,28 @@
     // 儲存成就篩選的切換狀態
     let isHideLockedEnabled = false;
 
-    // 注入縮圖的自訂 CSS
+    // 注入縮圖與動畫的自訂 CSS
     GM_addStyle(`
+        /* 動畫關鍵幀 */
+        @keyframes customFadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes customThumbIn {
+            from { opacity: 0; transform: scale(0.75); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes customFadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        /* 成績列表行淡入上移 */
+        .play-detail.custom-animated {
+            animation: customFadeInUp 0.35s ease both;
+        }
+
+        /* 縮圖彈入 */
         .custom-beatmap-thumb {
             width: 50px;
             height: 35px;
@@ -32,6 +52,21 @@
             margin-right: 10px;
             object-fit: cover;
             flex-shrink: 0;
+            animation: customThumbIn 0.25s ease both;
+        }
+
+        /* 成就徽章懸停效果 */
+        .medals-group__medal {
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+        .medals-group__medal:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 8px rgba(255, 102, 170, 0.55));
+        }
+
+        /* 開關按鈕淡入 */
+        #toggle-locked-medals-wrapper {
+            animation: customFadeIn 0.4s ease both;
         }
     `);
 
@@ -41,6 +76,7 @@
     
     function injectThumbnails() {
         const playDetails = document.querySelectorAll('.play-detail__group--top');
+        let newRowIndex = 0;
 
         playDetails.forEach(group => {
             if (group.querySelector('.custom-beatmap-thumb')) return;
@@ -55,7 +91,7 @@
             if (match && match[1]) {
                 const setId = match[1];
                 const img = document.createElement('img');
-                
+
                 img.src = `https://assets.ppy.sh/beatmaps/${setId}/covers/list.jpg`;
                 img.className = 'custom-beatmap-thumb';
                 img.alt = 'Beatmap Thumbnail';
@@ -64,6 +100,14 @@
                 const rankIcon = group.querySelector('.play-detail__icon--main');
                 if (rankIcon) {
                     rankIcon.insertAdjacentElement('afterend', img);
+                }
+
+                // 為整個成績列表行加上入場動畫（含錯開的延遲）
+                const row = group.closest('.play-detail');
+                if (row && !row.classList.contains('custom-animated')) {
+                    row.style.animationDelay = `${newRowIndex * 40}ms`;
+                    row.classList.add('custom-animated');
+                    newRowIndex++;
                 }
             }
         });
