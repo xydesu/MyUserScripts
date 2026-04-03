@@ -21,10 +21,12 @@
 
     const css = `
       :root {
-        --xydesu-ease: cubic-bezier(.22,.61,.36,1);
-        --xydesu-fast: 180ms;
-        --xydesu-med: 320ms;
-        --xydesu-slow: 520ms;
+        --xydesu-ease: cubic-bezier(.25,.46,.45,.94);
+        --xydesu-ease-out: cubic-bezier(.16,1,.3,1);
+        --xydesu-fast: 200ms;
+        --xydesu-med: 340ms;
+        --xydesu-slow: 540ms;
+        --xydesu-hover-dur: 260ms;
         --xydesu-fade-y: 14px;
         --xydesu-hover-y: -3px;
         --xydesu-hover-scale: 1.015;
@@ -69,8 +71,16 @@
       }
 
       a, button, [role="button"], .btn, .button, .nav2__col, .menu__item {
-        transform: translateZ(0);
+        transform: translateY(0) scale(1);
         backface-visibility: hidden;
+        will-change: transform;
+        transition:
+          transform var(--xydesu-hover-dur) var(--xydesu-ease-out),
+          filter var(--xydesu-hover-dur) var(--xydesu-ease-out),
+          color var(--xydesu-fast) var(--xydesu-ease),
+          background-color var(--xydesu-fast) var(--xydesu-ease),
+          box-shadow var(--xydesu-hover-dur) var(--xydesu-ease-out),
+          opacity var(--xydesu-fast) var(--xydesu-ease);
       }
 
       a:hover, button:hover, [role="button"]:hover, .btn:hover, .button:hover,
@@ -80,12 +90,17 @@
       }
 
       a:active, button:active, [role="button"]:active, .btn:active, .button:active {
-        transform: translateY(0) scale(0.99);
+        transform: translateY(0) scale(0.98);
+        transition-duration: 100ms;
       }
 
       .beatmapset-panel, .news-post-preview, .forum-topic-entry, .user-card,
       .profile-page__component, .value-display, .osu-page--generic > .content-with-header {
-        transform: translateZ(0);
+        transform: translateY(0);
+        will-change: transform;
+        transition:
+          transform var(--xydesu-hover-dur) var(--xydesu-ease-out),
+          box-shadow var(--xydesu-hover-dur) var(--xydesu-ease-out);
       }
 
       .beatmapset-panel:hover, .news-post-preview:hover, .forum-topic-entry:hover, .user-card:hover,
