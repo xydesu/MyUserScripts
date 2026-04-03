@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         osu! 個人資料增強
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  Enhances osu! user profile pages by adding beatmap cover thumbnails to score lists and a toggle button to hide unearned medals in the achievements section.
 // @author       xydesu
 // @match        https://osu.ppy.sh/users/*
@@ -37,6 +37,10 @@
             from { opacity: 0; }
             to   { opacity: 1; }
         }
+        @keyframes customFadeOut {
+            from { opacity: 1; }
+            to   { opacity: 0; }
+        }
 
         /* 成績列表行淡入上移 */
         .play-detail.custom-animated {
@@ -67,6 +71,14 @@
         /* 開關按鈕淡入 */
         #toggle-locked-medals-wrapper {
             animation: customFadeIn 0.4s ease both;
+        }
+
+        /* 成就徽章隱藏/顯示動畫 */
+        .medals-group__medal--hiding {
+            animation: customFadeOut 0.3s ease both;
+        }
+        .medals-group__medal--showing {
+            animation: customFadeIn 0.3s ease both;
         }
     `);
 
@@ -117,30 +129,53 @@
     // 3. 功能二：成就隱藏開關 (Medals Toggle)
     // ==========================================
     
-    function updateMedalsVisibility() {
-        // 處理個別成就的隱藏/顯示
-        const lockedMedals = document.querySelectorAll('.badge-achievement--locked');
-        lockedMedals.forEach(medal => {
-            const wrapper = medal.closest('.medals-group__medal');
-            if (wrapper) {
-                wrapper.style.display = isHideLockedEnabled ? 'none' : '';
-            }
-        });
-
-        // 處理分類標題 (若該分類下沒有已獲得成就，隱藏整個分類)
+    // 處理分類標題 (若該分類下沒有已獲得成就，隱藏整個分類)
+    function updateGroupsVisibility() {
         const medalGroups = document.querySelectorAll('.medals-group__group');
         medalGroups.forEach(group => {
             const allMedals = Array.from(group.querySelectorAll('.medals-group__medal'));
             if (allMedals.length === 0) return;
 
             const allHidden = allMedals.every(m => m.style.display === 'none');
-            
+
             if (isHideLockedEnabled && allHidden) {
                 group.style.display = 'none';
             } else {
                 group.style.display = '';
             }
         });
+    }
+
+    function updateMedalsVisibility() {
+        const lockedMedals = document.querySelectorAll('.badge-achievement--locked');
+
+        if (isHideLockedEnabled) {
+            // 淡出後隱藏
+            lockedMedals.forEach(medal => {
+                const wrapper = medal.closest('.medals-group__medal');
+                if (!wrapper || wrapper.style.display === 'none') return;
+                wrapper.classList.remove('medals-group__medal--showing');
+                wrapper.classList.add('medals-group__medal--hiding');
+                wrapper.addEventListener('animationend', () => {
+                    wrapper.style.display = 'none';
+                    wrapper.classList.remove('medals-group__medal--hiding');
+                    updateGroupsVisibility();
+                }, { once: true });
+            });
+        } else {
+            // 先顯示元素，再淡入
+            lockedMedals.forEach(medal => {
+                const wrapper = medal.closest('.medals-group__medal');
+                if (!wrapper) return;
+                wrapper.style.display = '';
+                wrapper.classList.remove('medals-group__medal--hiding');
+                wrapper.classList.add('medals-group__medal--showing');
+                wrapper.addEventListener('animationend', () => {
+                    wrapper.classList.remove('medals-group__medal--showing');
+                }, { once: true });
+            });
+            updateGroupsVisibility();
+        }
     }
 
     function injectToggle() {
