@@ -7,6 +7,7 @@
 // @match        https://osu.ppy.sh/*
 // @run-at       document-start
 // @grant        none
+// @grant        window.onurlchange
 // ==/UserScript==
 
 (() => {
