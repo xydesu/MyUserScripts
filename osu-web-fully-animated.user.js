@@ -187,6 +187,7 @@
       layer.style.setProperty('--xydesu-py', `${currentY}px`);
 
       if (Math.abs(targetX - currentX) < 0.05 && Math.abs(targetY - currentY) < 0.05) {
+        cancelAnimationFrame(raf);
         raf = 0;
         return;
       }
@@ -259,6 +260,7 @@
 
     function triggerRouteTransition() {
       if (!document.body) return;
+      // Slightly reduce opacity (not full fade) for a quick flash that signals navigation
       document.body.style.opacity = '0.92';
       document.body.style.transform = 'translateY(6px)';
       requestAnimationFrame(() => {
