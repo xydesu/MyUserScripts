@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         osu! 個人資料增強
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  Enhances osu! user profile pages by adding beatmap cover thumbnails to score lists and a toggle button to hide unearned medals in the achievements section.
 // @author       xydesu
-// @match        https://osu.ppy.sh/users/*
+// @match        https://osu.ppy.sh/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=osu.ppy.sh
 // @grant        GM_addStyle
 // @grant        window.onurlchange
@@ -60,10 +60,10 @@
         }
 
         /* 成就徽章懸停效果 */
-        .medals-group__medal {
+        .medals-group .badge-achievement {
             transition: transform 0.15s ease, filter 0.15s ease;
         }
-        .medals-group__medal:hover {
+        .medals-group .badge-achievement:hover {
             transform: scale(1.1);
             filter: drop-shadow(0 0 8px rgba(255, 102, 170, 0.55));
         }
@@ -162,7 +162,7 @@
     function updateGroupsVisibility() {
         const medalGroups = document.querySelectorAll('.medals-group__group');
         medalGroups.forEach(group => {
-            const allMedals = Array.from(group.querySelectorAll('.medals-group__medal'));
+            const allMedals = Array.from(group.querySelectorAll('.badge-achievement'));
             if (allMedals.length === 0) return;
 
             const allHidden = allMedals.every(m => m.style.display === 'none');
@@ -181,8 +181,8 @@
         if (isHideLockedEnabled) {
             // 淡出後隱藏
             lockedMedals.forEach(medal => {
-                const wrapper = medal.closest('.medals-group__medal');
-                if (!wrapper || wrapper.style.display === 'none') return;
+                const wrapper = medal;
+                if (wrapper.style.display === 'none') return;
                 wrapper.classList.remove('medals-group__medal--showing');
                 wrapper.classList.add('medals-group__medal--hiding');
                 wrapper.addEventListener('animationend', () => {
@@ -194,8 +194,7 @@
         } else {
             // 先顯示元素，再淡入
             lockedMedals.forEach(medal => {
-                const wrapper = medal.closest('.medals-group__medal');
-                if (!wrapper) return;
+                const wrapper = medal;
                 wrapper.style.display = '';
                 wrapper.classList.remove('medals-group__medal--hiding');
                 wrapper.classList.add('medals-group__medal--showing');
@@ -270,7 +269,12 @@
     // 4. 統一的觀察器 (Unified MutationObserver)
     // ==========================================
 
+    function isUserProfilePage() {
+        return /^\/users\//.test(window.location.pathname);
+    }
+
     function onPageLoad() {
+        if (!isUserProfilePage()) return;
         // 切換頁面時重置成就篩選狀態
         isHideLockedEnabled = false;
         injectThumbnails();
@@ -289,7 +293,7 @@
         }
 
         // 只要 DOM 有新增節點，就同時檢查並執行兩個功能的邏輯
-        if (hasAddedNodes) {
+        if (hasAddedNodes && isUserProfilePage()) {
             injectThumbnails();
 
             if (document.querySelector('.medals-group')) {
