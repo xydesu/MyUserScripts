@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         osu! 個人資料增強
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.8
 // @description  Enhances osu! user profile pages by adding beatmap cover thumbnails to score lists and a toggle button to hide unearned medals in the achievements section.
 // @author       xydesu
 // @match        https://osu.ppy.sh/users/*
@@ -60,10 +60,10 @@
         }
 
         /* 成就徽章懸停效果 */
-        .medals-group__medal {
+        .badge-achievement--listing {
             transition: transform 0.15s ease, filter 0.15s ease;
         }
-        .medals-group__medal:hover {
+        .badge-achievement--listing:hover {
             transform: scale(1.1);
             filter: drop-shadow(0 0 8px rgba(255, 102, 170, 0.55));
         }
@@ -74,10 +74,10 @@
         }
 
         /* 成就徽章隱藏/顯示動畫 */
-        .medals-group__medal--hiding {
+        .badge-achievement--hiding {
             animation: customFadeOut 0.3s ease both;
         }
-        .medals-group__medal--showing {
+        .badge-achievement--showing {
             animation: customFadeIn 0.3s ease both;
         }
     `);
@@ -129,40 +129,11 @@
     // 3. 功能二：成就隱藏開關 (Medals Toggle)
     // ==========================================
 
-    function getCurrentUserId() {
-        const jsonEl = document.getElementById('json-current-user');
-        if (jsonEl) {
-            try {
-                const data = JSON.parse(jsonEl.textContent);
-                return data && data.id ? String(data.id) : null;
-            } catch (e) {}
-        }
-        return null;
-    }
-
-    function getProfileUserId() {
-        const jsonEl = document.getElementById('json-user');
-        if (jsonEl) {
-            try {
-                const data = JSON.parse(jsonEl.textContent);
-                return data && data.id ? String(data.id) : null;
-            } catch (e) {}
-        }
-        const urlMatch = window.location.pathname.match(/^\/users\/(\d+)/);
-        return urlMatch ? urlMatch[1] : null;
-    }
-
-    function isOwnProfile() {
-        const currentId = getCurrentUserId();
-        const profileId = getProfileUserId();
-        return currentId !== null && profileId !== null && currentId === profileId;
-    }
-    
     // 處理分類標題 (若該分類下沒有已獲得成就，隱藏整個分類)
     function updateGroupsVisibility() {
         const medalGroups = document.querySelectorAll('.medals-group__group');
         medalGroups.forEach(group => {
-            const allMedals = Array.from(group.querySelectorAll('.medals-group__medal'));
+            const allMedals = Array.from(group.querySelectorAll('.badge-achievement--listing'));
             if (allMedals.length === 0) return;
 
             const allHidden = allMedals.every(m => m.style.display === 'none');
@@ -181,26 +152,23 @@
         if (isHideLockedEnabled) {
             // 淡出後隱藏
             lockedMedals.forEach(medal => {
-                const wrapper = medal.closest('.medals-group__medal');
-                if (!wrapper || wrapper.style.display === 'none') return;
-                wrapper.classList.remove('medals-group__medal--showing');
-                wrapper.classList.add('medals-group__medal--hiding');
-                wrapper.addEventListener('animationend', () => {
-                    wrapper.style.display = 'none';
-                    wrapper.classList.remove('medals-group__medal--hiding');
+                if (medal.style.display === 'none') return;
+                medal.classList.remove('badge-achievement--showing');
+                medal.classList.add('badge-achievement--hiding');
+                medal.addEventListener('animationend', () => {
+                    medal.style.display = 'none';
+                    medal.classList.remove('badge-achievement--hiding');
                     updateGroupsVisibility();
                 }, { once: true });
             });
         } else {
             // 先顯示元素，再淡入
             lockedMedals.forEach(medal => {
-                const wrapper = medal.closest('.medals-group__medal');
-                if (!wrapper) return;
-                wrapper.style.display = '';
-                wrapper.classList.remove('medals-group__medal--hiding');
-                wrapper.classList.add('medals-group__medal--showing');
-                wrapper.addEventListener('animationend', () => {
-                    wrapper.classList.remove('medals-group__medal--showing');
+                medal.style.display = '';
+                medal.classList.remove('badge-achievement--hiding');
+                medal.classList.add('badge-achievement--showing');
+                medal.addEventListener('animationend', () => {
+                    medal.classList.remove('badge-achievement--showing');
                 }, { once: true });
             });
             updateGroupsVisibility();
@@ -208,7 +176,6 @@
     }
 
     function injectToggle() {
-        if (!isOwnProfile()) return;
         if (document.getElementById('toggle-locked-medals-wrapper')) return;
 
         const titleElements = Array.from(document.querySelectorAll('.title--page-extra'));
