@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         osu! 個人資料增強
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  Enhances osu! user profile pages by adding beatmap cover thumbnails to score lists and a toggle button to hide unearned medals in the achievements section.
 // @author       xydesu
 // @match        https://osu.ppy.sh/users/*
@@ -129,35 +129,6 @@
     // 3. 功能二：成就隱藏開關 (Medals Toggle)
     // ==========================================
 
-    function getCurrentUserId() {
-        const jsonEl = document.getElementById('json-current-user');
-        if (jsonEl) {
-            try {
-                const data = JSON.parse(jsonEl.textContent);
-                return data && data.id ? String(data.id) : null;
-            } catch (e) {}
-        }
-        return null;
-    }
-
-    function getProfileUserId() {
-        const jsonEl = document.getElementById('json-user');
-        if (jsonEl) {
-            try {
-                const data = JSON.parse(jsonEl.textContent);
-                return data && data.id ? String(data.id) : null;
-            } catch (e) {}
-        }
-        const urlMatch = window.location.pathname.match(/^\/users\/(\d+)/);
-        return urlMatch ? urlMatch[1] : null;
-    }
-
-    function isOwnProfile() {
-        const currentId = getCurrentUserId();
-        const profileId = getProfileUserId();
-        return currentId !== null && profileId !== null && currentId === profileId;
-    }
-    
     // 處理分類標題 (若該分類下沒有已獲得成就，隱藏整個分類)
     function updateGroupsVisibility() {
         const medalGroups = document.querySelectorAll('.medals-group__group');
@@ -205,7 +176,6 @@
     }
 
     function injectToggle() {
-        if (!isOwnProfile()) return;
         if (document.getElementById('toggle-locked-medals-wrapper')) return;
 
         const titleElements = Array.from(document.querySelectorAll('.title--page-extra'));
